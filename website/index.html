@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>skanO — Professional Dithering Tool</title>
+  <meta name="description" content="skanO is a professional dithering tool for images and GIFs. 13 algorithms, custom palettes, live preview. Free for Windows." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f8f7f4;
+      --bg2:       #ffffff;
+      --bg3:       #f0ede8;
+      --border:    #e5e2dc;
+      --text:      #141414;
+      --text-mid:  #4a4a4a;
+      --text-muted:#888;
+      --accent:    #1a1a1a;
+      --accent-r:  #e63946;
+      --white:     #ffffff;
+      --card-hover:#fefefe;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', "Segoe UI", system-ui, sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ─── NAV ─────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 58px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px;
+      background: rgba(248,247,244,0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-size: 20px; font-weight: 900; letter-spacing: -1px;
+      color: var(--text); text-decoration: none;
+    }
+    .nav-logo em { font-style: normal; color: var(--accent-r); }
+    .nav-links { display: flex; gap: 36px; list-style: none; }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500;
+      transition: color .15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--text); color: #fff; border: none;
+      padding: 9px 22px; border-radius: 8px; font-size: 14px;
+      font-weight: 700; cursor: pointer; text-decoration: none; font-family: inherit;
+      transition: opacity .15s, transform .1s;
+    }
+    .nav-cta:hover { opacity: 0.82; transform: translateY(-1px); }
+
+    /* ─── HERO ────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 120px 48px 80px;
+      text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(230,57,70,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(0,0,0,0.04) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text-mid); padding: 5px 14px; border-radius: 100px;
+      font-size: 12px; font-weight: 600; letter-spacing: 0.4px;
+      margin-bottom: 32px;
+    }
+    .hero-eyebrow .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent-r); animation: blink 2s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    .hero h1 {
+      font-size: clamp(56px, 9vw, 110px);
+      font-weight: 900; line-height: 0.95;
+      letter-spacing: -4px; margin-bottom: 28px;
+      color: var(--text);
+    }
+    .hero h1 em { font-style: normal; color: var(--accent-r); }
+
+    .hero-sub {
+      font-size: clamp(16px, 2vw, 20px); color: var(--text-muted);
+      max-width: 500px; margin: 0 auto 44px; line-height: 1.65; font-weight: 400;
+    }
+
+    .hero-buttons {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 52px;
+    }
+    .btn-dl {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--text); color: #fff; text-decoration: none;
+      padding: 15px 34px; border-radius: 10px; font-size: 16px;
+      font-weight: 700; font-family: inherit;
+      transition: opacity .15s, transform .12s, box-shadow .2s;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+      border: none; cursor: pointer;
+    }
+    .btn-dl:hover { opacity: 0.85; transform: translateY(-2px); box-shadow: 0 6px 28px rgba(0,0,0,0.22); }
+
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent; color: var(--text-muted); text-decoration: none;
+      padding: 15px 28px; border-radius: 10px; font-size: 15px;
+      font-weight: 500; border: 1px solid var(--border);
+      transition: border-color .15s, color .15s;
+    }
+    .btn-ghost:hover { border-color: #aaa; color: var(--text); }
+
+    .hero-stats {
+      display: flex; align-items: center; justify-content: center;
+      gap: 32px; font-size: 13px; color: var(--text-muted);
+    }
+    .hero-stats span { display: flex; align-items: center; gap: 6px; }
+    .hero-stats svg { opacity: 0.5; }
+
+    /* ─── APP WINDOW MOCKUP ───────────────────── */
+    .mockup-section {
+      padding: 0 48px 110px;
+      display: flex; justify-content: center;
+    }
+    .app-window {
+      width: 100%; max-width: 920px;
+      background: #1a1a1a; border-radius: 16px;
+      border: 1px solid #2a2a2a;
+      box-shadow: 0 48px 120px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.06);
+      overflow: hidden;
+      transition: transform .4s ease, box-shadow .4s ease;
+    }
+    .app-window:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 60px 140px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,0,0,0.06);
+    }
+    .titlebar {
+      background: #222; padding: 11px 16px;
+      display: flex; align-items: center; gap: 7px;
+      border-bottom: 1px solid #2e2e2e;
+    }
+    .tb-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .tb-dot.r { background: #ff5f57; }
+    .tb-dot.y { background: #febc2e; }
+    .tb-dot.g { background: #28c840; }
+    .tb-name { margin-left: 10px; font-size: 12px; color: #555; letter-spacing: 0.2px; }
+    .window-body { display: flex; height: 440px; }
+    .window-canvas {
+      flex: 1; background: #141414;
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+    #demo-canvas { display: block; image-rendering: pixelated; }
+    .window-side {
+      width: 210px; background: #111; border-left: 1px solid #222;
+      padding: 18px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto;
+    }
+    .ws-section { display: flex; flex-direction: column; gap: 8px; }
+    .ws-label { font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 1px; }
+    .ws-select {
+      background: #1c1c1c; border: 1px solid #2a2a2a; border-radius: 6px;
+      color: #ccc; padding: 6px 10px; font-size: 12px; cursor: pointer; width: 100%;
+    }
+    .ws-slider { width: 100%; accent-color: #e63946; cursor: pointer; }
+    .ws-swatches { display: flex; gap: 4px; flex-wrap: wrap; }
+    .ws-swatch { width: 20px; height: 20px; border-radius: 4px; border: 1px solid #333; }
+    .ws-btn {
+      margin-top: auto; background: #1c1c1c; border: 1px solid #2a2a2a;
+      color: #666; padding: 8px; border-radius: 7px; cursor: pointer;
+      font-size: 11px; width: 100%; transition: background .15s;
+    }
+    .ws-btn:hover { background: #252525; color: #999; }
+
+    /* ─── SECTION BASE ────────────────────────── */
+    .section { padding: 100px 48px; max-width: 1140px; margin: 0 auto; }
+    .sec-tag {
+      font-size: 11px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--accent-r); margin-bottom: 14px;
+    }
+    .sec-title {
+      font-size: clamp(30px, 4vw, 48px); font-weight: 900;
+      letter-spacing: -1.5px; line-height: 1.08; margin-bottom: 18px;
+    }
+    .sec-sub {
+      font-size: 17px; color: var(--text-muted); max-width: 500px;
+      line-height: 1.7; margin-bottom: 60px;
+    }
+
+    /* ─── FEATURES ────────────────────────────── */
+    .feat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+    }
+    .feat-card {
+      background: var(--bg2); padding: 36px 32px;
+      transition: background .2s;
+    }
+    .feat-card:hover { background: var(--bg); }
+    .feat-icon {
+      font-size: 28px; margin-bottom: 16px; display: block;
+    }
+    .feat-card h3 { font-size: 17px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.3px; }
+    .feat-card p { font-size: 14px; color: var(--text-muted); line-height: 1.65; }
+
+    /* ─── SHOWCASE STRIP ──────────────────────── */
+    .showcase {
+      background: var(--text); color: #fff;
+      padding: 80px 48px;
+    }
+    .showcase-inner { max-width: 1140px; margin: 0 auto; }
+    .showcase h2 {
+      font-size: clamp(28px, 4vw, 44px); font-weight: 900;
+      letter-spacing: -1.5px; margin-bottom: 14px;
+    }
+    .showcase p { color: #888; font-size: 16px; margin-bottom: 44px; max-width: 480px; }
+    .algo-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .algo-tag {
+      background: #1e1e1e; border: 1px solid #2e2e2e;
+      color: #aaa; padding: 8px 16px; border-radius: 100px;
+      font-size: 13px; font-weight: 500;
+      transition: background .15s, color .15s, border-color .15s; cursor: default;
+    }
+    .algo-tag:hover, .algo-tag.on {
+      background: var(--accent-r); border-color: var(--accent-r); color: #fff;
+    }
+
+    /* ─── PALETTES ────────────────────────────── */
+    .pal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 14px;
+    }
+    .pal-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden; transition: transform .2s, box-shadow .2s;
+    }
+    .pal-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
+    .pal-strip { display: flex; height: 40px; }
+    .pal-strip div { flex: 1; }
+    .pal-name { padding: 10px 14px; font-size: 13px; color: var(--text-muted); font-weight: 500; }
+
+    /* ─── DOWNLOAD ────────────────────────────── */
+    .download { padding: 120px 48px; text-align: center; }
+    .download-inner {
+      max-width: 620px; margin: 0 auto;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 24px; padding: 64px 48px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.07);
+    }
+    .download-inner h2 {
+      font-size: clamp(32px, 5vw, 52px); font-weight: 900;
+      letter-spacing: -2px; margin-bottom: 14px;
+    }
+    .download-inner h2 em { font-style: normal; color: var(--accent-r); }
+    .download-inner p { color: var(--text-muted); margin-bottom: 38px; font-size: 16px; }
+    .download-btn {
+      display: inline-flex; align-items: center; gap: 12px;
+      background: var(--text); color: #fff; text-decoration: none;
+      padding: 17px 44px; border-radius: 12px; font-size: 18px;
+      font-weight: 800; font-family: inherit; border: none; cursor: pointer;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+      transition: opacity .15s, transform .12s;
+    }
+    .download-btn:hover { opacity: 0.85; transform: translateY(-2px); }
+    .dl-meta {
+      margin-top: 22px; color: #bbb; font-size: 13px;
+      display: flex; justify-content: center; gap: 22px; flex-wrap: wrap;
+    }
+    .dl-meta span { display: flex; align-items: center; gap: 5px; }
+
+    /* ─── FOOTER ──────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 36px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .foot-logo { font-size: 18px; font-weight: 900; letter-spacing: -0.8px; }
+    .foot-logo em { font-style: normal; color: var(--accent-r); }
+    footer p { color: var(--text-muted); font-size: 13px; }
+    .foot-links { display: flex; gap: 24px; list-style: none; }
+    .foot-links a { color: var(--text-muted); text-decoration: none; font-size: 13px; transition: color .15s; }
+    .foot-links a:hover { color: var(--text); }
+
+    /* ─── DIVIDER ─────────────────────────────── */
+    hr { border: none; border-top: 1px solid var(--border); }
+
+    /* ─── REVEAL ──────────────────────────────── */
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity .55s ease, transform .55s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .stagger .reveal:nth-child(1){transition-delay:0s}
+    .stagger .reveal:nth-child(2){transition-delay:.07s}
+    .stagger .reveal:nth-child(3){transition-delay:.14s}
+    .stagger .reveal:nth-child(4){transition-delay:.21s}
+    .stagger .reveal:nth-child(5){transition-delay:.28s}
+    .stagger .reveal:nth-child(6){transition-delay:.35s}
+
+    /* ─── RESPONSIVE ──────────────────────────── */
+    @media(max-width:900px){
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .hero, .mockup-section, .section, .download { padding-left: 20px; padding-right: 20px; }
+      .feat-grid { grid-template-columns: 1fr; }
+      .window-side { display: none; }
+      footer { flex-direction: column; text-align: center; padding: 28px 20px; }
+      .showcase { padding: 60px 20px; }
+    }
+
+    /* ─── MODAL ───────────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 999;
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #fff; border-radius: 16px; padding: 40px 36px;
+      max-width: 440px; width: 90%; text-align: center;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.2);
+    }
+    .modal-box h3 { font-size: 22px; font-weight: 800; margin-bottom: 10px; }
+    .modal-box p { color: #666; font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+    .modal-close {
+      background: #1a1a1a; color: #fff; border: none;
+      padding: 11px 28px; border-radius: 8px; font-size: 14px;
+      font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">skan<em>O</em></a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#algorithms">Algorithms</a></li>
+    <li><a href="#palettes">Palettes</a></li>
+    <li><a href="#download">Download</a></li>
+  </ul>
+  <a class="nav-cta" href="#download">Free Download</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow"><span class="dot"></span> Free · Windows 10/11 · v1.0.0</div>
+  <h1>skan<em>O</em></h1>
+  <p class="hero-sub">A professional dithering tool for images and GIFs. 13 algorithms, custom palettes, live preview.</p>
+  <div class="hero-buttons">
+    <button class="btn-dl" onclick="handleDownload()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download for Windows
+    </button>
+    <a class="btn-ghost" href="#features">
+      See features
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+  </div>
+  <div class="hero-stats">
+    <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>Windows 10 / 11</span>
+    <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>No installation</span>
+    <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>100% Free</span>
+  </div>
+</section>
+
+<!-- APP MOCKUP -->
+<section class="mockup-section">
+  <div class="app-window reveal">
+    <div class="titlebar">
+      <div class="tb-dot r"></div>
+      <div class="tb-dot y"></div>
+      <div class="tb-dot g"></div>
+      <span class="tb-name">skanO  —  v1.0.0</span>
+    </div>
+    <div class="window-body">
+      <div class="window-canvas">
+        <canvas id="demo-canvas" width="700" height="440"></canvas>
+      </div>
+      <div class="window-side">
+        <div class="ws-section">
+          <div class="ws-label">Algorithm</div>
+          <select class="ws-select" id="algo-sel" onchange="redraw()">
+            <option>Floyd-Steinberg</option>
+            <option>Bayer 4×4</option>
+            <option>Atkinson</option>
+            <option>Random Noise</option>
+            <option>None (Threshold)</option>
+          </select>
+        </div>
+        <div class="ws-section">
+          <div class="ws-label">Scale  <span id="scale-val" style="color:#666">2</span></div>
+          <input type="range" class="ws-slider" id="scale-r" min="1" max="8" value="2"
+            oninput="document.getElementById('scale-val').textContent=this.value; redraw()">
+        </div>
+        <div class="ws-section">
+          <div class="ws-label">Palette</div>
+          <div class="ws-swatches" id="pal-swatches"></div>
+        </div>
+        <div class="ws-section">
+          <div class="ws-label">Contrast</div>
+          <input type="range" class="ws-slider" min="50" max="200" value="110" oninput="redraw()">
+        </div>
+        <button class="ws-btn" onclick="cycleImg()">Next Image ↻</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="sec-tag">Features</div>
+  <h2 class="sec-title">Built for pixel artists<br>and retro lovers.</h2>
+  <p class="sec-sub">Every tool you need to create stunning dithered art, packed into a clean and fast app.</p>
+  <div class="feat-grid stagger">
+    <div class="feat-card reveal">
+      <span class="feat-icon">⚡</span>
+      <h3>Live Preview</h3>
+      <p>See changes instantly as you adjust settings. Background threading keeps the UI smooth at all times.</p>
+    </div>
+    <div class="feat-card reveal">
+      <span class="feat-icon">🎨</span>
+      <h3>Custom Palettes</h3>
+      <p>9 iconic built-in palettes — Game Boy, CGA, PICO-8, NES, Sweetie 16. Or build your own color set.</p>
+    </div>
+    <div class="feat-card reveal">
+      <span class="feat-icon">🔢</span>
+      <h3>13 Algorithms</h3>
+      <p>Floyd-Steinberg, Atkinson, Bayer matrices, Sierra, Stucki and more. Each with a unique character.</p>
+    </div>
+    <div class="feat-card reveal">
+      <span class="feat-icon">🎞</span>
+      <h3>GIF Support</h3>
+      <p>Process every frame of an animated GIF and export a perfectly dithered animation. Frame by frame.</p>
+    </div>
+    <div class="feat-card reveal">
+      <span class="feat-icon">🖼</span>
+      <h3>Pixel Scale</h3>
+      <p>Scale from 1× to 16×. Control the pixel size to get that chunky retro 8-bit or 16-bit look.</p>
+    </div>
+    <div class="feat-card reveal">
+      <span class="feat-icon">✂️</span>
+      <h3>Fine Adjustments</h3>
+      <p>Contrast, brightness, midtones and blur controls let you perfect the source before dithering.</p>
+    </div>
+  </div>
+</section>
+
+<hr/>
+
+<!-- ALGORITHMS DARK STRIP -->
+<section class="showcase" id="algorithms">
+  <div class="showcase-inner">
+    <div class="sec-tag" style="color:#e63946">Algorithms</div>
+    <h2>13 dithering algorithms.</h2>
+    <p>Error diffusion, ordered Bayer patterns, random noise — hover to highlight.</p>
+    <div class="algo-grid">
+      <span class="algo-tag on">Floyd-Steinberg</span>
+      <span class="algo-tag">Atkinson</span>
+      <span class="algo-tag">Jarvis-Judice-Ninke</span>
+      <span class="algo-tag">Stucki</span>
+      <span class="algo-tag">Burkes</span>
+      <span class="algo-tag">Sierra</span>
+      <span class="algo-tag">Sierra Two-Row</span>
+      <span class="algo-tag">Sierra Lite</span>
+      <span class="algo-tag on">Bayer 2×2</span>
+      <span class="algo-tag on">Bayer 4×4</span>
+      <span class="algo-tag on">Bayer 8×8</span>
+      <span class="algo-tag">Random Noise</span>
+      <span class="algo-tag">None (Threshold)</span>
+    </div>
+  </div>
+</section>
+
+<!-- PALETTES -->
+<section class="section" id="palettes">
+  <div class="sec-tag">Palettes</div>
+  <h2 class="sec-title">9 iconic palettes.</h2>
+  <p class="sec-sub">Retro classics pre-loaded and ready. Or mix your own colors with the built-in picker.</p>
+  <div class="pal-grid stagger">
+    <div class="pal-card reveal"><div class="pal-strip"><div style="background:#000"></div><div style="background:#fff"></div></div><div class="pal-name">Black & White</div></div>
+    <div class="pal-card reveal"><div class="pal-strip"><div style="background:#0f380f"></div><div style="background:#306230"></div><div style="background:#8bac0f"></div><div style="background:#9bbc0f"></div></div><div class="pal-name">Game Boy</div></div>
+    <div class="pal-card reveal"><div class="pal-strip"><div style="background:#000"></div><div style="background:#00aa00"></div><div style="background:#aa0000"></div><div style="background:#0000aa"></div><div style="background:#aaaa00"></div><div style="background:#fff"></div></div><div class="pal-name">CGA</div></div>
+    <div class="pal-card reveal"><div class="pal-strip"><div style="background:#000"></div><div style="background:#1d2b53"></div><div style="background:#7e2553"></div><div style="background:#008751"></div><div style="background:#ab5236"></div><div style="background:#c2c3c7"></div><div style="background:#fff1e8"></div></div><div class="pal-name">PICO-8</div></div>
+    <div class="pal-card reveal"><div class="pal-strip"><div style="background:#1a1c2c"></div><div style="background:#5d275d"></div><div style="background:#b13e53"></div><div style="background:#ef7d57"></div><div style="background:#a7f070"></div><div style="background:#38b764"></div></div><div class="pal-name">Sweetie 16</div></div>
+    <div class="pal-card reveal"><div class="pal-strip"><div style="background:#000"></div><div style="background:#555"></div><div style="background:#aaa"></div><div style="background:#fff"></div></div><div class="pal-name">4 Grays</div></div>
+  </div>
+</section>
+
+<hr/>
+
+<!-- DOWNLOAD -->
+<section class="download" id="download">
+  <div class="download-inner reveal">
+    <h2>Download<br>skan<em>O</em>.</h2>
+    <p>Free forever. No account, no subscription. Just unzip and run.</p>
+    <button class="download-btn" onclick="handleDownload()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download for Windows
+    </button>
+    <div class="dl-meta">
+      <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>Windows 10 / 11 (64-bit)</span>
+      <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>Portable — no install needed</span>
+      <span>v1.0.0</span>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-logo">skan<em>O</em></div>
+  <p>© 2025 skanO. All rights reserved.</p>
+  <ul class="foot-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#algorithms">Algorithms</a></li>
+    <li><a href="#download">Download</a></li>
+  </ul>
+</footer>
+
+<!-- DOWNLOAD MODAL (gösterilir eğer link henüz ayarlanmamışsa) -->
+<div class="modal-overlay" id="dl-modal">
+  <div class="modal-box">
+    <h3>🔗 Download Link Needed</h3>
+    <p>GitHub Releases'e dosyayı yükledikten sonra<br><code style="background:#f5f5f5;padding:3px 8px;border-radius:4px;font-size:13px">index.html</code> içindeki<br><strong>DOWNLOAD_URL</strong> kısmını güncelle.</p>
+    <button class="modal-close" onclick="document.getElementById('dl-modal').classList.remove('open')">Tamam</button>
+  </div>
+</div>
+
+<script>
+// ── İNDİRME LINK ─────────────────────────────────────────────────────────────
+// GitHub Releases'e yüklediğinde buraya kendi linkini yaz:
+const DOWNLOAD_URL = ""; // örn: "https://github.com/kullanici/skano/releases/download/v1.0.0/skanO.zip"
+
+function handleDownload() {
+  if (!DOWNLOAD_URL || DOWNLOAD_URL === "") {
+    document.getElementById('dl-modal').classList.add('open');
+    return;
+  }
+  window.location.href = DOWNLOAD_URL;
+}
+
+// ── DEMO CANVAS ───────────────────────────────────────────────────────────────
+const DEMO_PALETTES = {
+  'Floyd-Steinberg': [[0,0,0],[255,255,255]],
+  'Bayer 4×4':       [[0,0,0],[255,255,255]],
+  'Atkinson':        [[15,56,15],[48,98,48],[139,172,15],[155,188,15]],
+  'Random Noise':    [[0,0,0],[29,43,83],[126,37,83],[0,135,81],[171,82,54],[194,195,199]],
+  'None (Threshold)':[[0,0,0],[255,255,255]],
+};
+const B4 = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+let imgIdx = 0;
+
+function nearest(r,g,b,pal){
+  let bi=0,bd=Infinity;
+  for(let i=0;i<pal.length;i++){const dr=r-pal[i][0],dg=g-pal[i][1],db=b-pal[i][2];const d=dr*dr+dg*dg+db*db;if(d<bd){bd=d;bi=i;}}
+  return pal[bi];
+}
+function genImg(w,h,idx){
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const ctx=c.getContext('2d');
+  const t=idx%4;
+  if(t===0){const g=ctx.createRadialGradient(w*.3,h*.4,0,w*.7,h*.5,w*.8);g.addColorStop(0,'#ffffff');g.addColorStop(.5,'#666');g.addColorStop(1,'#000');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);}
+  else if(t===1){const g=ctx.createLinearGradient(0,0,w,h);g.addColorStop(0,'#0f0f0f');g.addColorStop(.5,'#e63946');g.addColorStop(1,'#1a1a2e');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);}
+  else if(t===2){ctx.fillStyle='#111';ctx.fillRect(0,0,w,h);for(let i=0;i<7;i++){ctx.fillStyle=`hsl(${i*52},65%,${25+i*7}%)`;ctx.fillRect(i*(w/7),0,w/7,h);}const g2=ctx.createLinearGradient(0,0,0,h);g2.addColorStop(0,'transparent');g2.addColorStop(1,'rgba(0,0,0,.6)');ctx.fillStyle=g2;ctx.fillRect(0,0,w,h);}
+  else{const g=ctx.createRadialGradient(w*.5,h*.5,0,w*.5,h*.5,w*.6);g.addColorStop(0,'#ffe66d');g.addColorStop(.4,'#f7971e');g.addColorStop(1,'#1a1a1a');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);}
+  return ctx.getImageData(0,0,w,h);
+}
+function floydSteinberg(src,w,h,pal){
+  const buf=new Float32Array(src.data);const out=new Uint8ClampedArray(w*h*4);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const i=(y*w+x)*4;const nr=nearest(buf[i],buf[i+1],buf[i+2],pal);
+    const er=buf[i]-nr[0],eg=buf[i+1]-nr[1],eb=buf[i+2]-nr[2];
+    out[i]=nr[0];out[i+1]=nr[1];out[i+2]=nr[2];out[i+3]=255;
+    const sp=[[0,1,7/16],[1,-1,3/16],[1,0,5/16],[1,1,1/16]];
+    for(const[dy,dx,wt]of sp){const ny=y+dy,nx=x+dx;if(ny>=0&&ny<h&&nx>=0&&nx<w){const j=(ny*w+nx)*4;buf[j]+=er*wt;buf[j+1]+=eg*wt;buf[j+2]+=eb*wt;}}
+  }
+  return new ImageData(out,w,h);
+}
+function bayer(src,w,h,pal){
+  const out=new Uint8ClampedArray(w*h*4);const sp=255/Math.max(pal.length,2);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const i=(y*w+x)*4;const th=(B4[y%4][x%4]/16-.5)*sp;
+    const nr=nearest(Math.max(0,Math.min(255,src.data[i]+th)),Math.max(0,Math.min(255,src.data[i+1]+th)),Math.max(0,Math.min(255,src.data[i+2]+th)),pal);
+    out[i]=nr[0];out[i+1]=nr[1];out[i+2]=nr[2];out[i+3]=255;
+  }
+  return new ImageData(out,w,h);
+}
+function threshold(src,w,h,pal){
+  const out=new Uint8ClampedArray(w*h*4);
+  for(let i=0;i<w*h*4;i+=4){const nr=nearest(src.data[i],src.data[i+1],src.data[i+2],pal);out[i]=nr[0];out[i+1]=nr[1];out[i+2]=nr[2];out[i+3]=255;}
+  return new ImageData(out,w,h);
+}
+
+function redraw(){
+  const canvas=document.getElementById('demo-canvas');
+  const ctx=canvas.getContext('2d');
+  const algo=document.getElementById('algo-sel').value;
+  const scale=parseInt(document.getElementById('scale-r').value);
+  const pal=DEMO_PALETTES[algo]||[[0,0,0],[255,255,255]];
+  const W=canvas.width,H=canvas.height;
+  const sw=Math.floor(W/scale),sh=Math.floor(H/scale);
+  const src=genImg(sw,sh,imgIdx);
+  let proc;
+  if(algo==='Floyd-Steinberg'||algo==='Atkinson') proc=floydSteinberg(src,sw,sh,pal);
+  else if(algo==='Bayer 4×4') proc=bayer(src,sw,sh,pal);
+  else if(algo==='Random Noise'){
+    const r=new ImageData(new Uint8ClampedArray(src.data),sw,sh);
+    const s2=255/Math.max(pal.length,2);
+    for(let i=0;i<r.data.length;i+=4){const n=(Math.random()-.5)*s2;r.data[i]=Math.max(0,Math.min(255,r.data[i]+n));r.data[i+1]=Math.max(0,Math.min(255,r.data[i+1]+n));r.data[i+2]=Math.max(0,Math.min(255,r.data[i+2]+n));}
+    proc=threshold(r,sw,sh,pal);
+  } else proc=threshold(src,sw,sh,pal);
+  const tmp=document.createElement('canvas');tmp.width=sw;tmp.height=sh;
+  tmp.getContext('2d').putImageData(proc,0,0);
+  ctx.clearRect(0,0,W,H);ctx.imageSmoothingEnabled=false;ctx.drawImage(tmp,0,0,W,H);
+  // update swatches
+  const ps=document.getElementById('pal-swatches');
+  ps.innerHTML=pal.slice(0,10).map(c=>`<div class="ws-swatch" style="background:rgb(${c[0]},${c[1]},${c[2]})"></div>`).join('');
+}
+function cycleImg(){imgIdx++;redraw();}
+window.addEventListener('load',redraw);
+
+// ── SCROLL REVEAL ─────────────────────────────────────────────────────────────
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}});
+},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
